@@ -5,6 +5,7 @@
 #include <QTimer>
 #include "user_info.h"
 #include <QMap>
+#include <synchapi.h>
 #include "db.h"
 
 Tcp_Server::Tcp_Server(QWidget *parent) :
@@ -29,7 +30,7 @@ Tcp_Server::Tcp_Server(QWidget *parent) :
     {
         this->connect(TCP_Server,SIGNAL(newConnection()),this,SLOT(slot_newconnect()));
 
-        //定期给服务器发送信息来检测异常断开的情况
+        //利用自实现的心跳包机制，定期给服务器发送信息来检测异常断开的情况
         QTimer *timer = new QTimer(this);
         connect(timer,SIGNAL(timeout()),this,SLOT(update_Socket()));
         timer->start(1000);
@@ -44,17 +45,36 @@ Tcp_Server::~Tcp_Server()
 {
     delete ui;
 }
+
+//服务器坑位检测函数，用以检测服务器目前是否还有可用的坑位
+/*
+int Tcp_Server::check_num()
+{
+    for(int i=1;i<=9;i++)
+    {
+        if(this->num[i] == 0)
+        {
+            return i;
+        }
+    }
+    return 0;
+}
+*/
+
 void Tcp_Server::slot_newconnect()
 {
     TCP_connectSocket = TCP_Server->nextPendingConnection();
+    qDebug()<<"有新的客户端接入";
     location++;
     connect_sum++;
     client[location] = new Client(this,TCP_connectSocket,location);
+
     this->map1.insert(location,*client[location]);
+
     //服务器列表更新
     this->server_menu_update();
     //客户端列表更新
-    this->client_menu_update();
+    this->client_menu_update();;
     //当客户端有通信发出时
     connect(map1[location].Socket,SIGNAL(readyRead()),&map1[location],SLOT(slot_Read()));
 
@@ -68,13 +88,17 @@ void Tcp_Server::slot_sendmsg(QString str,int send_id,int recv_id)
         std::string str1 = str.toStdString();
         const char *data = str1.c_str();
         map1.value(recv_id).Socket->write(data);
+        return;
     }
-    else
-    {
+
+
         std::string str1 = send_id+":"+str.toStdString();
         const char *data = str1.c_str();
+        qDebug()<<"*********************slot_sendmsg************************";
+        qDebug()<<"Request header:"+QString(data);
         map1.value(recv_id).Socket->write(data);
-    }
+        //qDebug()<< "sendhanshu";
+
 
 
 }
@@ -92,7 +116,8 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
         QString msg;
         QString user_name = str.mid(11,idx2-11);
         QString user_pwd = str.mid(idx2+10,idx3-idx2-10);
-
+        bool lS=false,hasHistory=false;
+        QString historyMsg;
         if((DataBase->selectSql(user_name)))
         {
             //用户名存在
@@ -102,10 +127,10 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
                 if(DataBase->selectState(user_name)==0)
                 {
                     //登录成功
+                    lS=true;
                     msg = "L#1";
                     DataBase->changeState(user_name,recv_id);
                     //DataBase->changeState(user_name,this->location);
-
                 }
                 else
                 {
@@ -127,7 +152,13 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
             msg = "U#1";
         }
         qDebug()<< msg;
+        qDebug()<<"------------------------------------------------------------";
+        qDebug()<<"dd";
         slot_sendmsg(msg,0,recv_id);
+        if(hasHistory and lS){
+            qDebug()<<"In send history message!!!!";
+            map1.value(recv_id).Socket->write(historyMsg.toStdString().c_str());
+        }
         //服务器列表更新
         this->server_menu_update();
         //客户端列表更新
@@ -204,17 +235,38 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
 
         if(DataBase->selectFriend(send_name,recv_name))
         {
-            if(recv_location == 0)
+            qDebug()<<"两个人是好友，可以发送信息:"<<str.mid(idx3+8,idx4-idx3-8);
+            msg = "M#0"+send_name+":"+str.mid(idx3+8,idx4-idx3-8);
+            //dummy message
+            bool flag=true;
+            if(str.mid(idx3+8,idx4-idx3-8)=="0xfa3254s8e|||"){
+                qDebug()<<"心跳检测略过";
+                flag=false;
+            }
+            if(recv_location == 0 && flag)
             {
                 qDebug()<<"该用户离线";
-                msg = "M#1";
-                slot_sendmsg(msg,0,send_location);
+                QString str= send_location+":"+msg;
+                qDebug()<<"*********************LXslot_sendmsg************************";
+                qDebug()<<"Request header:"+QString(str);
+                if(recv_name=="")qDebug()<<"panic at slot_sendmsg recv_name==''";
+                DataBase->insertHistoryMessage(recv_name,send_name,str);
             }
             else
             {
                 qDebug()<<"可以发消息";
-                msg = "M#0"+send_name+":"+str.mid(idx3+8,idx4-idx3-8);
-                slot_sendmsg(msg,send_location,recv_location);
+                std::vector<QString> mssm;
+                if(DataBase->getHistoryMessage(send_name,recv_name,mssm)){
+                    QString sendmsg=mssm[0].mid(0,mssm[0].length()-3);
+                    for(size_t i=1;i<mssm.size();++i){
+                        sendmsg+="\n";
+                        sendmsg+=mssm[i].mid(mssm[i].indexOf(':')+1,mssm[i].length()-3-mssm[i].indexOf(':')-1);
+                    };
+                    qDebug()<<"发送离线消息："<<sendmsg;
+                    sendmsg+="|||";
+                    map1.value(send_location).Socket->write(sendmsg.toStdString().c_str());
+                }
+                if(flag)slot_sendmsg(msg,send_location,recv_location);
             }
 
         }
@@ -224,7 +276,12 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
             msg = "M#2";
             slot_sendmsg(msg,0,send_location);
         }
+
+
+
         qDebug()<<msg;
+
+
     }
     else if(str[0] == 'U')
     {
@@ -272,8 +329,13 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
                             msg = "F#1";
                             //服务器列表更新
                             this->server_menu_update();
+
+
                             //客户端列表更新
                             this->client_menu_update();
+
+
+
                         }
                         else
                         {
@@ -288,37 +350,21 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
             msg = "F#3";
         }
 
-        slot_sendmsg(msg,0,DataBase->selectState(My_name));
+        //slot_sendmsg(msg,0,DataBase->selectState(My_name),false);
         qDebug()<<"##########"<<msg;
 
     }
 
     else if(str[0] == 'G')
     {
-        QString msg;
-        if(str[1]=='r'&&str[2]=='0'){
-            //新建群组
-            int idx1 = str.indexOf("/");
-            int idx2 = str.indexOf("From");
-            QString My_name = str.mid(10,idx1-10);
-            QString Group_name = str.mid(idx1+10,idx2-idx1-10);
-            if(DataBase->Group_table(Group_name,My_name)){
-                msg="G#0";//创建group成功
-            }
-            else msg="G#2";//创建失败
-            slot_sendmsg(msg,0,DataBase->selectState(My_name));
-        }
-        else if(str[1]=='r'&&str[2]=='1'){
-
-        }
-        else{
-            int idx1 = str.indexOf("From");
+        int idx1 = str.indexOf("From");
         QString user_name = str.mid(10,idx1-10);
         //服务器列表更新
         this->server_menu_update();
+
+
         //客户端列表更新
         this->client_menu_update();
-        }
 
     }
     else if(str[0] == "D")
@@ -342,29 +388,41 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
 //服务器清除“死客户端”函数，用于清除异常断开or正常断开的客户端占用的坑位
 void Tcp_Server::slot_disconnect(int location)
 {
+
+
     for(int i = 1;i <= DataBase->getNum(); i++)
     {
         //通过主键找username，再通过username找state，如果state=location，则state=0
         QString name = DataBase->getUsernameByUno(i);
+
         if(name != "unknow")
         {
             if(DataBase->selectState(name) == location)
             {
+                qDebug()<<"要删除啦！！！！！！";
                 DataBase->changeState(name,0);
             }
         }
+
     }
+
     map1.remove(location);
+
     this->connect_sum--;
     this->client_menu_update();
     this->server_menu_update();
+
 }
 
 //刷新更新目前在线的客户端数目
 void Tcp_Server::client_menu_update()
 {
+    //foreach (Client user,map1.values())
+    //{
+
         for(int i=1;i <= DataBase->getNum(); i++)
         {
+
             QString name = DataBase->getUsernameByUno(i);
             qDebug()<<"有在更新好友列表";
             qDebug()<<"好友的名字是"<<name;
@@ -377,6 +435,7 @@ void Tcp_Server::client_menu_update()
                 for(int j=1;j<=DataBase->getNum();j++)
                 {
                     qDebug()<<"第二层循环";
+
                     if(i!=j)
                     {
                         qDebug()<<"第一层条件";
@@ -422,6 +481,8 @@ void Tcp_Server::server_menu_update()
     if(connect_sum!=0)
     {
         ui->textBrowser->append("在线ip列表:");
+
+
         foreach(Client user,map1.values())
         {
             ui->textBrowser->append("#"+user.Socket->peerAddress().toString());

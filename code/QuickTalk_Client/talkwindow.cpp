@@ -17,6 +17,9 @@ TalkWindow::TalkWindow(QWidget *parent, QString name, QString name_f) :
 
     connect(clientsocket,SIGNAL(recvMsg(QString)),this,SLOT(getMsg(QString)));
     connect(udpreceiver,SIGNAL(deliverInfo(QString)),this,SLOT(file_ok(QString)));
+    //dummy message
+    QString msg = "M#send_user:" + myname + "/recv_user:" + friendname + "|message" + "0xfa3254s8e"+"|||";
+    clientsocket->sendMsg(msg);
 }
 
 void TalkWindow::TalkInit(){
@@ -37,10 +40,13 @@ void TalkWindow::TalkInit(){
 
 
     QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(this);
-                shadowEffect->setBlurRadius(20);
+    shadowEffect->setBlurRadius(20);
                shadowEffect->setXOffset(2);
                shadowEffect->setYOffset(2);
+
+
                ui->widget->setGraphicsEffect(shadowEffect);
+
     //字体类型
     connect(ui->fontCbx,&QFontComboBox::currentFontChanged,[=](const QFont &font){
         ui->msgTextEdit->setFontFamily(font.toString());

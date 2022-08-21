@@ -4,6 +4,9 @@
 #include"QSqlDatabase"
 #include"QString"
 #include <QSqlQueryModel>
+#include <vector>
+
+
 
 class db
 {
@@ -11,14 +14,14 @@ private:
 public:
     db();
     ~db();
-
-    QSqlDatabase dbInit();
     //把用户信息插入数据库,ture为插入成功，false为插入失败
     bool insertSql(user_info &user);
     //通过用户名在数据库查找，返回true为查找到，用户名已经存在，false为不存在
     bool selectSql(QString username);
     //判断用户名密码是否存在，是否匹配
     bool loginJudge(QString username,QString password);
+    bool getHistoryMessage(QString recvname,QString sendname,std::vector<QString>&msg);
+    void insertHistoryMessage(QString recvname,QString sendname,QString message);
     //获取记录个数
     int  getNum();
     //只要一注册，就添加一个表，需要提供用户名 如（王岩）表示王岩注册为用户，true表示注册成功
@@ -33,8 +36,6 @@ public:
     int  selectState(QString);
     //通过uno获取username
    QString getUsernameByUno(int);
-   bool Group_table(QString groupname,QString userid);
-   bool addGroup(QString userid,QString groupid);
 };
 
 #endif // DB_H
