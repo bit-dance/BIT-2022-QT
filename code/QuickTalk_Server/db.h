@@ -36,6 +36,8 @@ public:
     int  selectState(QString);
     //通过uno获取username
    QString getUsernameByUno(int);
+   bool Group_table(QString groupname,QString username);
+   bool addGroup(QString username,QString groupname);
 };
 
 #endif // DB_H

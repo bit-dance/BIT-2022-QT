@@ -357,14 +357,26 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
 
     else if(str[0] == 'G')
     {
-        int idx1 = str.indexOf("From");
-        QString user_name = str.mid(10,idx1-10);
-        //服务器列表更新
-        this->server_menu_update();
-
-
-        //客户端列表更新
-        this->client_menu_update();
+        QString msg;
+        if(str[1]=='r'&&str[2]=='0'){
+            //新建群组
+            int idx1 = str.indexOf("/");
+            int idx2 = str.indexOf("From");
+            QString My_name = str.mid(10,idx1-10);
+            QString Group_name = str.mid(idx1+10,idx2-idx1-10);
+            if(DataBase->Group_table(Group_name,My_name)){
+               msg="G#0";//创建group成功
+            }else msg="G#2";//创建失败
+            slot_sendmsg(msg,0,DataBase->selectState(My_name));
+        }else if(str[1]=='r'&&str[2]=='1'){
+        }else{
+            int idx1 = str.indexOf("From");
+            QString user_name = str.mid(10,idx1-10);
+            //服务器列表更新
+            this->server_menu_update();
+            //客户端列表更新
+            this->client_menu_update();
+        }
 
     }
     else if(str[0] == "D")

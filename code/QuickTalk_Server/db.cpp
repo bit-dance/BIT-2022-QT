@@ -352,3 +352,36 @@ QString db::getUsernameByUno(int uno)
     db.close();
     return username;
 }
+bool db::Group_table(QString groupname,QString username){
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+    QString sql=QString("create table %1(username varchar(255) primary key,identify int not null);").arg(groupname);
+    QSqlQuery query(db);
+    if(!query.exec()){
+           qDebug()<<"群表建立失败！原因是:"<< query.lastError().text();
+           db.close();
+           return false;
+       }
+       QString sql2=QString("insert into %1 values('%2',2);").arg(groupname).arg(username);
+       QSqlQuery query2(db);
+       query2.prepare(sql2);
+       if(!query2.exec()){
+           qDebug()<<"群表建立失败！原因是:"<< query2.lastError().text();
+           db.close();
+           return false;
+       }
+       db.close();
+       return true;
+   }
+   bool db::addGroup(QString username,QString groupname){
+       SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+       QString sql2=QString("insert into %1 values('%2',1);").arg(groupname).arg(username);
+       QSqlQuery query2(db);
+       query2.prepare(sql2);
+       if(!query2.exec()){
+           qDebug()<<"加群失败！原因是:"<< query2.lastError().text();
+           db.close();
+           return false;
+       }
+       db.close();
+       return true;
+   }
