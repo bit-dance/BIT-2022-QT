@@ -9,35 +9,91 @@
 #include <QSqlQueryModel>
 #include "db.h"
 
+//assume that user_info database must exist!!!!,tables will be automatically created in user_info database
+#define HOST_NAME "127.0.0.1"
+#define DATABASE_NAME "user_info"
+#define USR_NAME "root"
+#define PASSWORD "123456"
+
+#define SQLCONNECT(hostName,databaseName,usrName,PW) QSqlDatabase db=QSqlDatabase::addDatabase("QMYSQL");\
+db.setHostName(hostName);\
+db.setDatabaseName(databaseName);\
+db.setPort(3306);\
+db.setUserName(usrName);\
+db.setPassword(PW);
 
 db::db()
 {
    qDebug()<<"数据库对象建立!";
-
-
+   SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+   if(!db.open())
+   {
+      qDebug()<<"Error in the db:"<<db.lastError().text();
+   }
+   QSqlQuery query(db);
+   QString sql=QString("create table if not exists user_info(uno int primary key,name varchar(255),phone varchar(255),email varchar(255));");
+   query.prepare(sql);
+   query.exec();
+   sql=QString("create table if not exists login_info(uno int primary key,username varchar(255),password varchar(255));");
+   query.prepare(sql);
+   query.exec();
+   sql=QString("create table if not exists state_info(uno int primary key,username varchar(255),state int);");
+   query.prepare(sql);
+   query.exec();
 }
 
 db::~db()
 {
-    qDebug()<<"数据库对象释放!";
+   qDebug()<<"数据库对象释放!";
 }
+bool db::getHistoryMessage(QString recvname,QString sendname,std::vector<QString> &message){
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+    if(!db.open())
+    {
+       qDebug()<<"Error in the getHistoryMessage:"<<db.lastError().text();
+    }
+    QString sql = QString("select hisText,hasHistory from %1").arg(recvname+sendname);
+    qDebug()<<"query at getHistory!!!!!"<<sql;
+    QSqlQuery query(db);
+    query.prepare(sql);
+    query.exec();
+    bool ret=false;
+    //查询结束
+    while(query.next())
+    {
+        //匹配成功
+        if(query.value(1).toInt()){
+            message.push_back(query.value(0).toString());
+            qDebug()<<"msg at getHistoryMessage"<<message;
+            qDebug()<<message.size();
+        }
+        ret=true;
+    }
+    sql=QString("delete from %1").arg(recvname+sendname);
+    query.prepare(sql);
+    query.exec();
+    return ret;
+}
+void  db::insertHistoryMessage(QString recvname,QString sendname,QString message){
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+    if(!db.open())
+    {
+       qDebug()<<"Error in the insertHistoryMessage:"<<db.lastError().text();
+    }
+    //avoid connect SQL 2 times
+    QSqlQuery query(db);
+    QString sql = QString("insert into %1 values('%2',1)").arg(recvname+sendname).arg(message);
+    query.prepare(sql);
+    query.exec();
+}
+int db::getNum(){
 
-QSqlDatabase db::dbInit()
-{
-    QSqlDatabase  db=QSqlDatabase::addDatabase("QMYSQL");
-    db.setHostName("127.0.0.1");
-    db.setDatabaseName("user_info");
-    db.setPort(3306);
-    db.setUserName("root");
-    db.setPassword("admin");
-    return db;
-}
-int db::getNum(){//当前用户个数
-QSqlDatabase  db=db::dbInit();
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
     if(!db.open())
     {
          qDebug()<<"数据库在函数getNum打开失败!原因是:"<<db.lastError().text();
     }
+
     QString sql=QString("SELECT * FROM user_info");
     QSqlQuery query(db);
     if(!query.exec(sql)){
@@ -46,21 +102,22 @@ QSqlDatabase  db=db::dbInit();
         return 0;
     }
     int num=query.size();
+    qDebug()<<"数据库行数:"<<num;
     db.close();
     return num;
 }
 
-//注册完帐号后生成该用户好友表
+//注册完帐号后生成该用户好友列表
 bool db::Friend_table(QString username)
 {
-    QSqlDatabase  db=db::dbInit();
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
     if(!db.open())
     {
          qDebug()<<"数据库在函数login打开失败!原因是:"<<db.lastError().text();
          db.close();
          return false;
     }
-    QString sql=QString("create table %1(Friends varchar(255) not null,primary key(Friends));").arg(username  );
+    QString sql=QString("create table %1(Friends varchar(255) not null,primary key(Friends));").arg(username);
     QSqlQuery query(db);
     query.prepare(sql);
 //  query.bindValue(":name",QVariant(username));
@@ -74,7 +131,7 @@ bool db::Friend_table(QString username)
 }
 
 bool db::addFriend(QString user,QString friends){
-    QSqlDatabase  db=db::dbInit();
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
     if(!db.open())
     {
          qDebug()<<"数据库在函数addFriend打开失败!原因是:"<<db.lastError().text();
@@ -89,46 +146,17 @@ bool db::addFriend(QString user,QString friends){
         db.close();
         return false;
     }
-    db.close();
-    return true;
-}
-bool db::Group_table(QString groupname,QString username){
-    QSqlDatabase  db=db::dbInit();
-    QString sql=QString("create table %1(username varchar(255) primary key,identify int not null);").arg(groupname);
-    QSqlQuery query(db);
+    qDebug()<<"生成历史消息"<<user+friends;
+    sql=QString("create table if not exists %1(hisText TEXT,hasHistory int);").arg(user+friends);
     query.prepare(sql);
-    if(!query.exec()){
-        qDebug()<<"群表建立失败！原因是:"<< query.lastError().text();
-        db.close();
-        return false;
-    }
-    QString sql2=QString("insert into %1 values('%2',2);").arg(groupname).arg(username);
-    QSqlQuery query2(db);
-    query2.prepare(sql2);
-    if(!query2.exec()){
-        qDebug()<<"群表建立失败！原因是:"<< query2.lastError().text();
-        db.close();
-        return false;
-    }
+    query.exec();
     db.close();
     return true;
 }
-bool db::addGroup(QString username,QString groupname){
-    QSqlDatabase  db=db::dbInit();
-    QString sql2=QString("insert into %1 values('%2',1);").arg(groupname).arg(username);
-    QSqlQuery query2(db);
-    query2.prepare(sql2);
-    if(!query2.exec()){
-        qDebug()<<"加群失败！原因是:"<< query2.lastError().text();
-        db.close();
-        return false;
-    }
-    db.close();
-    return true;
-}
+
 bool db::selectFriend(QString user, QString friends)
 {
-      QSqlDatabase  db=db::dbInit();
+        SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
         //打开数据库
         if(!db.open())
         {
@@ -157,11 +185,13 @@ bool db::selectFriend(QString user, QString friends)
 
 
 bool db::insertSql(user_info &user){
-    QSqlDatabase  db=db::dbInit();
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
     if(!db.open())
     {
          qDebug()<<"数据库在函数 insertSql 打开失败!原因是:"<<db.lastError().text();
     }
+
+
     QString sql1=QString("INSERT INTO user_info VALUES(%1,'%2','%3','%4');")
             .arg(user.getUno())
             .arg(user.getName())
@@ -198,9 +228,10 @@ bool db::insertSql(user_info &user){
 
 
 bool db::selectSql(QString username)
-{//查询是否登陆过此用户
+{
 
- QSqlDatabase  db=db::dbInit();
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+
 
     //打开数据库
     if(!db.open())
@@ -230,13 +261,16 @@ bool db::selectSql(QString username)
 }
 
 bool db::loginJudge(QString username, QString password)
-{//判断账号密码
+{
 
-QSqlDatabase  db=db::dbInit();
+   SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+
+
     if(!db.open())
     {
          qDebug()<<"数据库在函数loginJudge打开失败！原因是："<<db.lastError().text();
     }
+
 
     QString sql = QString("select username,password from login_info where username = :name;");
     QSqlQuery query(db);
@@ -258,7 +292,7 @@ QSqlDatabase  db=db::dbInit();
     return false;
 }
 bool db::changeState(QString username,int state){
-   QSqlDatabase  db=db::dbInit();
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
     //打开数据库
     if(!db.open())
     {
@@ -278,7 +312,7 @@ bool db::changeState(QString username,int state){
 int db::selectState(QString username)
 {
     int state;
-    QSqlDatabase  db=db::dbInit();
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
     //打开数据库
     if(!db.open())
     {
@@ -299,7 +333,7 @@ int db::selectState(QString username)
 }
 QString db::getUsernameByUno(int uno)
 {
-    QSqlDatabase  db=db::dbInit();
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
     if(!db.open())
     {
          qDebug()<<"数据库在函数getUsernameByUno打开失败!原因是:"<<db.lastError().text();
@@ -314,6 +348,40 @@ QString db::getUsernameByUno(int uno)
     }
     query.next();
     QString username=query.value(0).toString();
+    qDebug()<<uno<<"对应的username是:"<<username;
     db.close();
     return username;
 }
+bool db::Group_table(QString groupname,QString username){
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+    QString sql=QString("create table %1(username varchar(255) primary key,identify int not null);").arg(groupname);
+    QSqlQuery query(db);
+    if(!query.exec()){
+           qDebug()<<"群表建立失败！原因是:"<< query.lastError().text();
+           db.close();
+           return false;
+       }
+       QString sql2=QString("insert into %1 values('%2',2);").arg(groupname).arg(username);
+       QSqlQuery query2(db);
+       query2.prepare(sql2);
+       if(!query2.exec()){
+           qDebug()<<"群表建立失败！原因是:"<< query2.lastError().text();
+           db.close();
+           return false;
+       }
+       db.close();
+       return true;
+   }
+   bool db::addGroup(QString username,QString groupname){
+       SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+       QString sql2=QString("insert into %1 values('%2',1);").arg(groupname).arg(username);
+       QSqlQuery query2(db);
+       query2.prepare(sql2);
+       if(!query2.exec()){
+           qDebug()<<"加群失败！原因是:"<< query2.lastError().text();
+           db.close();
+           return false;
+       }
+       db.close();
+       return true;
+   }
