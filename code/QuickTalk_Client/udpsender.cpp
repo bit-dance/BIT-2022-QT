@@ -3,7 +3,7 @@
 UdpSender::UdpSender()
 {
     m_Socket = new QUdpSocket();
-    initSender("192.168.8.107", 8192);
+    initSender("127.0.0.1", 8192);
     //接受者ip
 }
 UdpSender::~UdpSender()

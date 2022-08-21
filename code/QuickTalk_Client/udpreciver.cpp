@@ -7,7 +7,7 @@ UdpReciver::UdpReciver(QObject *parent) :
     m_thread = new QThread();
     m_udpSocket = new QUdpSocket();
     QString localhost = "";
-    init_port("192.168.8.107", 8192);
+    init_port("127.0.0.1", 8192);
     //自己的ip
     qDebug()<<"Here";
     connect(m_udpSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()), Qt::DirectConnection);
