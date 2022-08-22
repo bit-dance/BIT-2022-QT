@@ -134,6 +134,19 @@ void MainWindow::add_friend(QString info){
     }
     else if(info.contains("F#3")){
         QMessageBox::information(this,"提示","您查找的用户不存在");
+    }else if(info.contains("F#4")){
+        qDebug()<<"in add friend:F#4"<<info;
+        QString us=info.mid(info.indexOf('/')+1);
+        QString str;
+        if(QMessageBox::Yes==QMessageBox::question(this,"加好友通知","用户"+us+"想加你为好友?")){
+           str = "FYMy_id:"+my_name+"/Friend_id:"+us;
+
+        }else{
+           str = "FRMy_id:"+my_name+"/Friend_id:"+us;
+        }
+        clientSocket->sendMsg(str);
+    }else if(info.contains("F#5")){
+        QMessageBox::information(this,"提示","加好友失败,对方拒绝了您的请求!!!");
     }
     fresh_friend_list(true,on_friend);
     fresh_friend_list(false,off_friend);

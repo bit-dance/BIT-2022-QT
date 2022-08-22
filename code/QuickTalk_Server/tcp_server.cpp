@@ -290,7 +290,7 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
         }
         slot_sendmsg(msg,0,recv_id);
     }
-    else if(str[0] == 'F')
+    else if(str[0] == 'F' && str[1]!='Y' && str[1]!='R')
     {
         int idx1 = str.indexOf("/");
         int idx2 = str.indexOf("From");
@@ -304,40 +304,52 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
         {
             //查找的用户存在
             if(DataBase->selectFriend(My_name,Friend_name))
-                    {
-                        //两个人是好友
-                        msg = "F#0";
-                    }
-                    else
-                    {
-                        //彼此加为好友（在彼此的好友表中添加姓名）
-                        if(DataBase->addFriend(My_name,Friend_name) && DataBase->addFriend(Friend_name,My_name))
-                        {
-                            //加好友成功
-                            msg = "F#1";
-                            //服务器列表更新
-                            this->server_menu_update();
-
-                            //客户端列表更新
-                            this->client_menu_update();
-
-                        }
-                        else
-                        {
-                            //系统错误，加好友失败
-                            msg = "F#2";
-                        }
-                    }
-        }
-        else
-        {
+            {
+               //两个人是好友
+               msg = "F#0";
+               slot_sendmsg(msg,0,DataBase->selectState(My_name));
+            }else{
+               //彼此加为好友（在彼此的好友表中添加姓名）
+               int recv_location = DataBase->selectState(Friend_name);
+               if(recv_location )
+               {
+                   //请求加好友
+                   msg = "F#4/"+My_name;
+                   //服务器列表更新
+                   this->server_menu_update();
+                   //客户端列表更新
+                   this->client_menu_update();
+                   slot_sendmsg(msg,0,recv_location);
+               }else{
+                   //系统错误，加好友失败
+                   msg = "F#2";
+                   slot_sendmsg(msg,0,DataBase->selectState(My_name));
+               }
+           }
+        }else{
             //查找的用户不存在
             msg = "F#3";
+            slot_sendmsg(msg,0,DataBase->selectState(My_name));
         }
-        qDebug()<<"##########"<<msg;
-       slot_sendmsg(msg,0,recv_id);
+    }else if(str[0] == 'F'){
+        int idx1 = str.indexOf("/");
+        int idx2 = str.indexOf("From");
+        QString My_name = str.mid(8,idx1-8);
+        QString Friend_name = str.mid(idx1+11,idx2-idx1-11);
+        qDebug()<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
+        qDebug()<<My_name;
+        qDebug()<<Friend_name;
+        QString msg;
+        if(str[1]=='Y'){
+            DataBase->addFriend(My_name,Friend_name);
+            DataBase->addFriend(Friend_name,My_name);
+            msg = "F#1";
+            slot_sendmsg(msg,0,DataBase->selectState(Friend_name));
+        }else{
+            msg = "F#5";
+            slot_sendmsg(msg,0,DataBase->selectState(Friend_name));
+        }
     }
-
     else if(str[0] == 'G')
     {
         QString msg;
