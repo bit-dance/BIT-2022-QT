@@ -33,6 +33,7 @@ public:
     bool selectFriend(QString,QString);
     //查找此用户所在群聊
     QStringList select_user_group(QString My_name);
+    std::vector<QString> getGroupUser(QString groupname, QString username);
     //通过username改变登录状态
     bool changeState (QString,int);
     //通过username查找登录状态
