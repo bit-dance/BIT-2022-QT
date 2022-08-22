@@ -267,11 +267,20 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
         }
         else
         {
-            qDebug()<<"该用户不是你的好友";
-            msg = "M#2";
-            slot_sendmsg(msg,0,send_location);
+            msg = "M#0"+send_name+":"+str.mid(idx3+8,idx4-idx3-8);
+            //空包，心跳检测
+            if(str.mid(idx3+8,idx4-idx3-8)!="0xfa3254s8e|||"){
+                std::vector<QString> groups=DataBase->getGroupUser(recv_name,send_name);
+                for(auto &x:groups){
+                    slot_sendmsg(msg,send_location,DataBase->selectState(x));
+                    qDebug()<<x;
+                }
+                qDebug()<<"-----------------send group message-----------";
+                //slot_sendmsg(msg,send_location,DataBase->selectState("lll"));
+            }
+
         }
-        qDebug()<<msg;
+
     }
     else if(str[0] == 'U')
     {

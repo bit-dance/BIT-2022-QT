@@ -13,7 +13,7 @@
 #define HOST_NAME "127.0.0.1"
 #define DATABASE_NAME "user_info"
 #define USR_NAME "root"
-#define PASSWORD "admin"
+#define PASSWORD "123456"
 
 #define SQLCONNECT(hostName,databaseName,usrName,PW) QSqlDatabase db=QSqlDatabase::addDatabase("QMYSQL");\
 db.setHostName(hostName);\
@@ -292,7 +292,31 @@ bool db::selectSql(QString username)
     db.close();
     return false;
 }
+std::vector<QString> db::getGroupUser(QString groupname, QString username)
+{
+    std::vector<QString> userNames;
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+    //打开数据库
+    if(!db.open())
+    {
+         qDebug()<<"数据库在函数select_user_group中打开失败!原因是:"<<db.lastError().text();
+    }
+    QString sql = QString("select username from %1;").arg(groupname);
+    QSqlQuery query(db);
+    query.prepare(sql);
+    query.exec();
 
+    while(query.next())
+    {
+        qDebug()<<query.value(0).toString();
+        if(username!=query.value(0).toString())
+        {userNames .push_back(query.value(0).toString());}
+    }
+    //select结束
+    db.close();
+    qDebug()<<userNames;
+    return userNames;
+}
 bool db::loginJudge(QString username, QString password)
 {
 
