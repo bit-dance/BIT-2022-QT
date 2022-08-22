@@ -305,16 +305,8 @@ std::vector<QString> db::getGroupUser(QString groupname, QString username)
     QSqlQuery query(db);
     query.prepare(sql);
     query.exec();
-    //查询结束
-    if(query.first())
-    {
-        qDebug()<<query.value(0).toString();
-        if(username!=query.value(0).toString())
-        {userNames .push_back(query.value(0).toString());}
-    }
 
-
-    if(query.next())
+    while(query.next())
     {
         qDebug()<<query.value(0).toString();
         if(username!=query.value(0).toString())
