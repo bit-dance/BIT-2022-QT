@@ -14,6 +14,7 @@ private:
 public:
     db();
     ~db();
+    QSqlDatabase dbinit();
     //把用户信息插入数据库,ture为插入成功，false为插入失败
     bool insertSql(user_info &user);
     //通过用户名在数据库查找，返回true为查找到，用户名已经存在，false为不存在
@@ -30,6 +31,8 @@ public:
     bool addFriend(QString,QString);
     //查找好友是否存在 如（王岩，王储）表示查找王储是否是王岩的好友，true表示是
     bool selectFriend(QString,QString);
+    //查找此用户所在群聊
+    QStringList select_user_group(QString My_name);
     //通过username改变登录状态
     bool changeState (QString,int);
     //通过username查找登录状态

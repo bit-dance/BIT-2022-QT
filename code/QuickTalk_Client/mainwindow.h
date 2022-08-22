@@ -22,7 +22,6 @@ public:
 private:
     void MainInit();
     void fresh_friend_list(bool,QStringList);
-    void group_list(QStringList);
     void fresh_group_list(QStringList);
 protected:
     void mousePressEvent(QMouseEvent *event);
@@ -38,10 +37,11 @@ private slots:
     void on_close_clicked();
     void on_hide_clicked();
     void on_newform_clicked();
-
+    void group_list(QString);
 
    void newGroup(QString);
-    void on_newgroup_clicked();
+
+    void on_pushButton_clicked();
 
 private:
     QToolButton *btn;
@@ -49,11 +49,12 @@ private:
     QString my_name;
     QStringList on_friend;
     QStringList off_friend;
-    QStringList group;
+    QStringList grouplist;
 
     TcpClientSocket *clientSocket;
     QVector<bool> IsShow_on;
     QVector<bool> IsShow_off;
+    QVector<bool> IsShow_group;
     bool mousePressed;//鼠标是否按下
     QPoint mousePoint;//鼠标（x，y轴）拖动自定义的坐标
 };

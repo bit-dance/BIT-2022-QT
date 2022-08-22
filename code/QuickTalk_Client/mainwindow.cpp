@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent,QString name) :
     connect(clientSocket,SIGNAL(return_friend_list(QString)),this,SLOT(friend_list(QString)));//返回朋友信息，得到朋友列表
     connect(clientSocket,SIGNAL(friend_add(QString)),this,SLOT(add_friend(QString)));
     connect(clientSocket,SIGNAL(new_Group(QString)),this,SLOT(newGroup(QString)));
+    connect(clientSocket,SIGNAL(return_group_list(QString)),this,SLOT(group_list(QString)));
 
 }
 
@@ -33,11 +34,15 @@ void MainWindow::MainInit(){
     animation->setEndValue(QSize(450, 780));
     animation->start();
 
-    //好友请求
+    //请求好友,群聊信息
     clientSocket->sendMsg("G#my_name:"+my_name);
+
+
 
     fresh_friend_list(true,on_friend);
     fresh_friend_list(false,off_friend);
+
+    fresh_group_list(grouplist);
 }
 MainWindow::~MainWindow()
 {
@@ -86,15 +91,33 @@ void MainWindow::on_newfriend_clicked()
     QString str = "F#My_id:"+my_name+"/Friend_id:"+friend_name;
     clientSocket->sendMsg(str);
 }
-
-void MainWindow::on_newgroup_clicked()
+void MainWindow::on_pushButton_clicked()//点击查找群聊
 {
+
     QString group_name = ui->search->text();
     QString str = "Gr0#My_id:"+my_name+"/group_id:"+group_name;
-    clientSocket->sendMsg(str);
+    if(grouplist.contains(group_name)){
+        QMessageBox::information(this,"提示","您已经在群聊中\n");
+    }
+    else{clientSocket->sendMsg(str);}
 }
 
 void MainWindow::newGroup(QString info){
+ if(info[2]=='0'){
+//创建群聊成功，要弹出提示后加入群列表
+     QMessageBox::information(this,"提示","添加群聊成功\n");
+     int idx=info.indexOf("!");
+     QString groupname=info.mid(3,idx-3);
+     //添加到群列表
+     grouplist.append(groupname);
+     fresh_group_list(grouplist);
+ }else if(info[2]=='2'){
+     //创建群聊失败
+     QMessageBox::information(this,"提示","添加群聊失败\n");
+ }
+ else{
+
+ }
 
 }
 void MainWindow::add_friend(QString info){
@@ -118,6 +141,7 @@ void MainWindow::add_friend(QString info){
 void MainWindow::friend_list(QString info){
     on_friend.clear();
     off_friend.clear();
+    grouplist.clear();
     QStringList str = info.split("%");
     qDebug()<<str;
     for(int i =0; i < str.size(); ++i){
@@ -131,38 +155,91 @@ void MainWindow::friend_list(QString info){
             off_friend = off.split("@");
             off_friend.removeAll("");
         }
+        if(str[i].contains("G#1")){
+            QString on = str[i].mid(4,-1);
+            grouplist=on.split("@");
+            grouplist.removeAll("");
+            qDebug()<<"群聊信息列表";
+            qDebug()<<grouplist;
+            fresh_group_list(grouplist);
+        }
     }
     qDebug()<<"in friend_list";
     qDebug()<<on_friend;
-    qDebug()<<off_friend;
+   qDebug()<<off_friend;
     fresh_friend_list(true,on_friend);
     fresh_friend_list(false,off_friend);
 }
+
+void MainWindow::group_list(QString info)
+{
+    QString on = info.mid(4,-1);
+    grouplist=on.split("@");
+    grouplist.removeAll("");
+    qDebug()<<"群聊信息列表";
+    qDebug()<<grouplist;
+    fresh_group_list(grouplist);
+}
+
+void MainWindow::fresh_group_list(QStringList grouplist)
+{
+    qDebug()<<"in fresh group";
+    qDebug()<<grouplist ;
+    QList<QToolButton*> btns = ui->group->findChildren<QToolButton*>();//!!!!
+    foreach (QToolButton* btn, btns){
+        delete btn;
+    }
+
+    for(int i=0;i<grouplist.size();++i){
+            btn=new QToolButton(this);
+            //加载图标
+            btn->setIcon(QPixmap(QString(":/image/chatgroup.png")));
+            //设置图片大小
+            btn->setIconSize(QPixmap(QString(":/image/chatgroup.png")).size()/8);
+            //设置网名
+            btn->setText(QString("%1").arg(grouplist[i]));
+            //设置为透明
+            btn->setAutoRaise(true);
+            //设置显示格式
+            btn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+            btn->setStyleSheet("font: 25 20pt;color: rgb(0, 0, 0);border-bottom : 5px groove #6699cc;");
+            btn->setGeometry(0, 0, 300, 100);
+            //on.push_back(btn);
+            ui->grouplayout->addWidget(btn);
+            IsShow_group.push_back(false);
+            connect(btn,&QToolButton::clicked,[=](){
+                if(IsShow_group[i])
+                {
+                    QMessageBox::warning(this,"警告","该聊天框已被打开!");
+                    return;
+                }
+                IsShow_group[i]=true;
+                TalkWindow *talkwindow=new TalkWindow(nullptr,my_name,grouplist[i]);
+                talkwindow->setWindowIcon(btn->icon());
+                talkwindow->setWindowTitle(btn->text());
+                talkwindow->show();
+                //关闭时将对应的IsShow_on变为false;
+                connect(talkwindow,&TalkWindow::closeWidget,this,[=](){
+                    IsShow_group[i]=false;
+                });
+            });
+
+    }
+}
 //在此刷新
-void MainWindow::group_list(QStringList)
-{
-
-}
-
-void MainWindow::fresh_group_list(QStringList)
-{
-
-}
 void MainWindow::fresh_friend_list(bool flag,QStringList namelist){
-    qDebug()<<"in fresh";
-    qDebug()<<flag<<"  "<<namelist;
-    if(flag==true){
-        QList<QToolButton*> btns = ui->online->findChildren<QToolButton*>();
+   // qDebug()<<"in fresh friend";
+   // qDebug()<<flag<<"  "<<namelist;
+    if(flag==true){//在线好友
+        QList<QToolButton*> btns = ui->online->findChildren<QToolButton*>();//!!!!
         foreach (QToolButton* btn, btns){
             delete btn;
         }
         for(int i=0;i<namelist.size();++i){
                 btn=new QToolButton(this);
                 //加载图标
-//                btn->setIcon(QPixmap(QString(":/images/%1.png").arg(iconNameList[i])));
                 btn->setIcon(QPixmap(QString(":/image/QQ.png")));
                 //设置图片大小
-//                btn->setIconSize(QPixmap(QString(":/images/%1.png").arg(iconNameList[i])).size());
                 btn->setIconSize(QPixmap(QString(":/image/QQ.png")).size()/2);
                 //设置网名
                 btn->setText(QString("%1").arg(namelist[i]));
@@ -175,7 +252,6 @@ void MainWindow::fresh_friend_list(bool flag,QStringList namelist){
                 //on.push_back(btn);
                 ui->onlayout->addWidget(btn);
                 IsShow_on.push_back(false);
-
                 connect(btn,&QToolButton::clicked,[=](){
                     if(IsShow_on[i])
                     {
@@ -195,7 +271,7 @@ void MainWindow::fresh_friend_list(bool flag,QStringList namelist){
 
         }
     }
-    else{
+    else{//离线好友
         QList<QToolButton*> btns = ui->offline->findChildren<QToolButton*>();
         foreach (QToolButton* btn, btns){
             delete btn;
@@ -295,6 +371,8 @@ void MainWindow::on_newform_clicked()
                             "QToolButton{border-style:none;}");
     });
 }
+
+
 
 
 

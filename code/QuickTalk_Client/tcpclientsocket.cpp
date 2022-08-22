@@ -98,6 +98,7 @@ void TcpClientSocket::receiveMessage(){
         }
     }
     else if(info.contains("F#")){
+
         emit friend_add(info);
     }
     else if(info.contains("M")){
@@ -107,9 +108,14 @@ void TcpClientSocket::receiveMessage(){
         emit return_friend_list(info);
     }
     else if(info.contains("G#")){
-        if (info[2]=='0'){
-            //group创建成功
+        if(info[2]=='1'){
+            emit return_group_list(info);
+            qDebug()<< "return_group_list";
+        }
+        else  {
             emit new_Group(info);
+
+
         }
 
     }

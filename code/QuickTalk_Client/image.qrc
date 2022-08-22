@@ -53,5 +53,6 @@
         <file>image/TOUXIANG.PNG</file>
         <file>image/underline.png</file>
         <file>image/ywj.jpg</file>
+        <file>image/chatgroup.png</file>
     </qresource>
 </RCC>

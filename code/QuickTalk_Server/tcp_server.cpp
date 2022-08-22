@@ -88,18 +88,14 @@ void Tcp_Server::slot_sendmsg(QString str,int send_id,int recv_id)
         std::string str1 = str.toStdString();
         const char *data = str1.c_str();
         map1.value(recv_id).Socket->write(data);
+         qDebug()<< "sendmsg";
         return;
     }
-
-
         std::string str1 = send_id+":"+str.toStdString();
         const char *data = str1.c_str();
         qDebug()<<"*********************slot_sendmsg************************";
         qDebug()<<"Request header:"+QString(data);
         map1.value(recv_id).Socket->write(data);
-        //qDebug()<< "sendhanshu";
-
-
 
 }
 
@@ -121,7 +117,6 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
         if((DataBase->selectSql(user_name)))
         {
             //用户名存在
-
             if(DataBase->loginJudge(user_name,user_pwd))
             {
                 if(DataBase->selectState(user_name)==0)
@@ -276,12 +271,7 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
             msg = "M#2";
             slot_sendmsg(msg,0,send_location);
         }
-
-
-
         qDebug()<<msg;
-
-
     }
     else if(str[0] == 'U')
     {
@@ -300,7 +290,6 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
         }
         slot_sendmsg(msg,0,recv_id);
     }
-
     else if(str[0] == 'F')
     {
         int idx1 = str.indexOf("/");
@@ -310,7 +299,6 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
         qDebug()<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
         qDebug()<<My_name;
         qDebug()<<Friend_name;
-
         QString msg;
         if(DataBase->selectSql(Friend_name))
         {
@@ -330,11 +318,8 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
                             //服务器列表更新
                             this->server_menu_update();
 
-
                             //客户端列表更新
                             this->client_menu_update();
-
-
 
                         }
                         else
@@ -349,10 +334,8 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
             //查找的用户不存在
             msg = "F#3";
         }
-
-        //slot_sendmsg(msg,0,DataBase->selectState(My_name),false);
         qDebug()<<"##########"<<msg;
-
+       slot_sendmsg(msg,0,recv_id);
     }
 
     else if(str[0] == 'G')
@@ -365,13 +348,28 @@ void Tcp_Server::recvmsg(QString str,int recv_id)
             QString My_name = str.mid(10,idx1-10);
             QString Group_name = str.mid(idx1+10,idx2-idx1-10);
             if(DataBase->Group_table(Group_name,My_name)){
-               msg="G#0";//创建group成功
+               msg="G#0"+Group_name+"!";//创建group成功
             }else msg="G#2";//创建失败
             slot_sendmsg(msg,0,DataBase->selectState(My_name));
         }else if(str[1]=='r'&&str[2]=='1'){
+            //请求群聊信息
+            msg="G#1";
+            int idx = str.indexOf("From");
+            QString My_name = str.mid(12,idx-12);
+            QStringList my_grouplist= DataBase->select_user_group(My_name);
+            foreach(QString str,my_grouplist){
+                msg+="@"+str;
+
+            }
+             qDebug()<<msg;
+            slot_sendmsg(msg,0,DataBase->selectState(My_name));
+
         }else{
+            //有新的好友请求
             int idx1 = str.indexOf("From");
             QString user_name = str.mid(10,idx1-10);
+
+             this->usergroup_menu_update(user_name);
             //服务器列表更新
             this->server_menu_update();
             //客户端列表更新
@@ -415,9 +413,7 @@ void Tcp_Server::slot_disconnect(int location)
                 DataBase->changeState(name,0);
             }
         }
-
     }
-
     map1.remove(location);
 
     this->connect_sum--;
@@ -429,32 +425,27 @@ void Tcp_Server::slot_disconnect(int location)
 //刷新更新目前在线的客户端数目
 void Tcp_Server::client_menu_update()
 {
-    //foreach (Client user,map1.values())
-    //{
-
         for(int i=1;i <= DataBase->getNum(); i++)
         {
-
             QString name = DataBase->getUsernameByUno(i);
-            qDebug()<<"有在更新好友列表";
-            qDebug()<<"好友的名字是"<<name;
+            //qDebug()<<"有在更新好友列表";
+          //  qDebug()<<"好友的名字是"<<name;
             //说明这个name用户在线
             if(DataBase->selectState(name) != 0)
             {
                 QString online_name = "online_name:";
                 QString offline_name = "offline_name:";
-                qDebug()<<"第一层循环";
+               // qDebug()<<"第一层循环";
                 for(int j=1;j<=DataBase->getNum();j++)
                 {
-                    qDebug()<<"第二层循环";
-
+                 //   qDebug()<<"第二层循环";
                     if(i!=j)
                     {
-                        qDebug()<<"第一层条件";
+                    //    qDebug()<<"第一层条件";
                         QString friend_name = DataBase->getUsernameByUno(j);
                         if(DataBase->selectFriend(name,friend_name))
                         {
-                            qDebug()<<"第二层条件";
+                          //  qDebug()<<"第二层条件";
                             if( DataBase->selectState(friend_name) != 0)
                             {
                                 online_name+="@"+friend_name;
@@ -466,25 +457,18 @@ void Tcp_Server::client_menu_update()
                                 offline_name+="@"+friend_name;
                                 //slot_sendmsg("offline_name:"+friend_name,0,DataBase->selectState(name));
                             }
-
-
                         }
                     }
-
-
                 }
-
                 slot_sendmsg("%"+online_name+"%",0,DataBase->selectState(name));
                 slot_sendmsg("%"+offline_name+"%",0,DataBase->selectState(name));
             }
         }
-
-
-
     //}
 
 
 }
+//
 
 //服务器中在线客户端列表更新
 void Tcp_Server::server_menu_update()
@@ -493,8 +477,6 @@ void Tcp_Server::server_menu_update()
     if(connect_sum!=0)
     {
         ui->textBrowser->append("在线ip列表:");
-
-
         foreach(Client user,map1.values())
         {
             ui->textBrowser->append("#"+user.Socket->peerAddress().toString());
@@ -507,7 +489,6 @@ void Tcp_Server::server_menu_update()
                     if(DataBase->selectState(name)!=0)
                     {
                         ui->textBrowser->append("在线用户name:"+name+"用户客户端:"+QString::number(DataBase->selectState(name),10));
-
                     }
                     else
                     {
@@ -522,6 +503,18 @@ void Tcp_Server::server_menu_update()
     }
 
 
+}
+
+void Tcp_Server::usergroup_menu_update(QString My_name)
+{
+    QString msg="G#1";
+    QStringList my_grouplist= DataBase->select_user_group(My_name);
+    foreach(QString str,my_grouplist){
+        msg+="@"+str;
+    }
+     qDebug()<<msg;
+
+    slot_sendmsg("%"+msg+"%",0,DataBase->selectState(My_name));
 }
 
 //服务器更新清理函数，用于更新设备连接状态，清理释放过期的SOCKET

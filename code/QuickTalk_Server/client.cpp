@@ -23,7 +23,6 @@ void Client::slot_Read()
     {
         QString str = Socket->readAll();
         str = str + "From" + this->address.toString();
-        //int recv_id = this->parent->map1.key(*this);
         int recv_id = this->location;
         //qDebug()<<str;
         parent->recvmsg(str,recv_id);
@@ -32,7 +31,7 @@ void Client::slot_Read()
 }
 Client::Client(const Client &x)//拷贝构造
 {
-
+    
     this->Socket=x.Socket;
     this->address=x.address;
     this->parent=x.parent;

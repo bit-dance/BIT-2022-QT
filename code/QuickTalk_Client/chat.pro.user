@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.11.2, 2022-08-21T16:11:36. -->
+<!-- Written by QtCreator 4.11.2, 2022-08-22T01:04:35. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -287,8 +287,9 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:G:/qtcode/BIT_2022_Qt/code/QuickTalk_Client/chat.pro</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/qtcode/BIT_2022_Qt/code/QuickTalk_Client/chat.pro</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">chat2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:G:/QuickTalk/code/BIT_Qt_Practice/BIT-2022-QT/code/QuickTalk_Client/chat.pro</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/QuickTalk/code/BIT_Qt_Practice/BIT-2022-QT/code/QuickTalk_Client/chat.pro</value>
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>

@@ -42,7 +42,7 @@ signals:
     //主界面
     void return_friend_list(QString);
     void friend_add(QString);
-
+   void return_group_list(QString);
     //聊天
     void recvMsg(QString);
     //群

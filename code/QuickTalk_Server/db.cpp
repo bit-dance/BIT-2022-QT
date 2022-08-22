@@ -13,7 +13,7 @@
 #define HOST_NAME "127.0.0.1"
 #define DATABASE_NAME "user_info"
 #define USR_NAME "root"
-#define PASSWORD "123456"
+#define PASSWORD "admin"
 
 #define SQLCONNECT(hostName,databaseName,usrName,PW) QSqlDatabase db=QSqlDatabase::addDatabase("QMYSQL");\
 db.setHostName(hostName);\
@@ -21,6 +21,7 @@ db.setDatabaseName(databaseName);\
 db.setPort(3306);\
 db.setUserName(usrName);\
 db.setPassword(PW);
+
 
 db::db()
 {
@@ -102,7 +103,7 @@ int db::getNum(){
         return 0;
     }
     int num=query.size();
-    qDebug()<<"数据库行数:"<<num;
+   // qDebug()<<"数据库行数:"<<num;
     db.close();
     return num;
 }
@@ -167,11 +168,11 @@ bool db::selectFriend(QString user, QString friends)
         query.prepare(sql);
         query.exec();
         //查询结束
-        qDebug()<<query.value(1).toString();
+      //  qDebug()<<query.value(1).toString();
         if(query.next())
         {
             //匹配成功
-            qDebug()<<query.value(0).toString();
+          //  qDebug()<<query.value(0).toString();
             if(friends==query.value(0).toString()){
                 db.close();
                 return true;
@@ -181,6 +182,38 @@ bool db::selectFriend(QString user, QString friends)
         db.close();
         return false;
 
+}
+
+QStringList db::select_user_group(QString My_name)
+{
+    QStringList my_grouplist;
+    SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+    //打开数据库
+    if(!db.open())
+    {
+         qDebug()<<"数据库在函数select_user_group中打开失败!原因是:"<<db.lastError().text();
+    }
+    QString sql = QString("select groupname from %1;").arg(My_name+"group");
+    QSqlQuery query(db);
+    query.prepare(sql);
+    query.exec();
+    //查询结束
+    if(query.first())
+    {
+        qDebug()<<query.value(0).toString();
+        my_grouplist .append(query.value(0).toString());
+    }
+
+
+    if(query.next())
+    {
+        qDebug()<<query.value(0).toString();
+        my_grouplist .append(query.value(0).toString());
+    }
+    //select结束
+    db.close();
+    qDebug()<<my_grouplist;
+    return my_grouplist;
 }
 
 
@@ -221,7 +254,7 @@ bool db::insertSql(user_info &user){
         db.close();
         return false;
     }
-    qDebug()<<"插入成功!";
+   // qDebug()<<"插入成功!";
     db.close();
     return true;
 }
@@ -348,14 +381,20 @@ QString db::getUsernameByUno(int uno)
     }
     query.next();
     QString username=query.value(0).toString();
-    qDebug()<<uno<<"对应的username是:"<<username;
+    //qDebug()<<uno<<"对应的username是:"<<username;
     db.close();
     return username;
 }
+//群表,成员拥有群表de 创建与添加
 bool db::Group_table(QString groupname,QString username){
     SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
-    QString sql=QString("create table %1(username varchar(255) primary key,identify int not null);").arg(groupname);
-    QSqlQuery query(db);
+            if(!db.open())
+            {
+                 qDebug()<<"数据库在newgoup时打开失败!原因是:"<<db.lastError().text();
+            }//数据库已经打开
+    QString sql=QString("create table if not exists %1(username varchar(255) not null,identify int not null);").arg(groupname);
+    QSqlQuery query(db);//不能%1指代有引号
+    query.prepare(sql);
     if(!query.exec()){
            qDebug()<<"群表建立失败！原因是:"<< query.lastError().text();
            db.close();
@@ -365,15 +404,37 @@ bool db::Group_table(QString groupname,QString username){
        QSqlQuery query2(db);
        query2.prepare(sql2);
        if(!query2.exec()){
-           qDebug()<<"群表建立失败！原因是:"<< query2.lastError().text();
+           qDebug()<<"群表添加失败！原因是:"<< query2.lastError().text();
+           db.close();
+           return false;
+       }
+       QString sql3=QString("create table if not exists %1(groupname varchar(255));").arg(username+"Group");
+       QSqlQuery query3(db);
+       query3.prepare(sql3);
+       if(!query3.exec()){
+           qDebug()<<"成员拥有群表创建失败！原因是:"<< query3.lastError().text();
+           db.close();
+           return false;
+       }
+       QString sql4=QString("insert into %1 values('%2');").arg(username+"Group").arg(groupname);
+       QSqlQuery query4(db);
+       query4.prepare(sql4);
+       if(!query4.exec()){
+           qDebug()<<"成员拥有群表添加失败！原因是:"<< query4.lastError().text();
            db.close();
            return false;
        }
        db.close();
        return true;
    }
-   bool db::addGroup(QString username,QString groupname){
+
+//如果群表
+bool db::addGroup(QString username,QString groupname){
        SQLCONNECT(HOST_NAME,DATABASE_NAME,USR_NAME,PASSWORD)
+               if(!db.open())
+               {
+                    qDebug()<<"数据库在函数addgroup打开失败!原因是:"<<db.lastError().text();
+               }
        QString sql2=QString("insert into %1 values('%2',1);").arg(groupname).arg(username);
        QSqlQuery query2(db);
        query2.prepare(sql2);

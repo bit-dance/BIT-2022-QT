@@ -31,6 +31,7 @@ public:
     void recvmsg(QString str,int recv_id);
     void client_menu_update();
     void server_menu_update();
+    void usergroup_menu_update(QString user_name);
     void Timer();
 private slots:
     void slot_newconnect();

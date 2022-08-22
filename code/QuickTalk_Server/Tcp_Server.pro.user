@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.11.2, 2022-08-21T19:51:56. -->
+<!-- Written by QtCreator 4.11.2, 2022-08-22T01:04:35. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -287,9 +287,8 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Tcp_Server2</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:G:/QuickTalk/code/QuickTalk_Server/Tcp_Server.pro</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/QuickTalk/code/QuickTalk_Server/Tcp_Server.pro</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:G:/QuickTalk/code/BIT_Qt_Practice/BIT-2022-QT/code/QuickTalk_Server/Tcp_Server.pro</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">G:/QuickTalk/code/BIT_Qt_Practice/BIT-2022-QT/code/QuickTalk_Server/Tcp_Server.pro</value>
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
@@ -300,7 +299,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default"></value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">G:/github/BIT_2021_CS_Training/code/build-Tcp_Server-Desktop_Qt_5_12_8_MinGW_64_bit-Debug</value>
    </valuemap>
    <value type="int" key="ProjectExplorer.Target.RunConfigurationCount">1</value>
   </valuemap>
