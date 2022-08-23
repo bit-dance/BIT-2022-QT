@@ -1,7 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "background.h"
-
+#include <QBitmap>
+#include <Qpainter>
+#include "profile.h"
 MainWindow::MainWindow(QWidget *parent,QString name) :
     QWidget(parent),
     ui(new Ui::MainWindow)
@@ -17,12 +19,28 @@ MainWindow::MainWindow(QWidget *parent,QString name) :
     connect(clientSocket,SIGNAL(return_group_list(QString)),this,SLOT(group_list(QString)));
 
 }
+void MainWindow::paintEvent(QPaintEvent *p1)
+{
+    //绘制样式
+    QStyleOption opt;
+    opt.initFrom(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);//绘制样式
 
+    QBitmap bmp(this->size());
+    bmp.fill();
+    QPainter painter(&bmp);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(Qt::black);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.drawRoundedRect(bmp.rect(), 20, 20);
+    setMask(bmp);
+}
 //初始化
 void MainWindow::MainInit(){
     ui->search->setPlaceholderText("搜索好友/群聊");//搜索输入框提示信息
     this->setWindowFlags(Qt::FramelessWindowHint);//去边框
-    this->setWindowTitle("QT");//设置左上角文字
+    this->setWindowTitle("QuickTalk");//设置左上角文字
     this->setWindowIcon(QIcon(":/image/QQ.png"));//设置左上角图标
 
     ui->name->setText(my_name);//账号名
@@ -384,7 +402,39 @@ void MainWindow::on_newform_clicked()
                             "QToolButton{border-style:none;}");
     });
 }
-
+void MainWindow::on_profile_clicked()//头像修改
+{
+    Profile *profile = new Profile;
+    profile->show();//close();
+    connect(profile,&Profile::change1,this,[=](){
+        ui->profile->setIcon(QIcon());
+        ui->profile->setStyleSheet(".QToolButton#profile{border-image:url(:/image/profile_1.png);}");
+    });
+    connect(profile,&Profile::change2,this,[=](){
+        ui->profile->setIcon(QIcon());
+        ui->profile->setStyleSheet("QToolButton{border-image:url(:/image/profile_2.png);}");
+    });
+    connect(profile,&Profile::change3,this,[=](){
+        ui->profile->setIcon(QIcon());
+        ui->profile->setStyleSheet("QToolButton{border-image:url(:/image/profile_3.png);}");
+    });
+    connect(profile,&Profile::change4,this,[=](){
+        ui->profile->setIcon(QIcon());
+        ui->profile->setStyleSheet("QToolButton{border-image:url(:/image/profile_4.png);}");
+    });
+    connect(profile,&Profile::change5,this,[=](){
+        ui->profile->setIcon(QIcon());
+        ui->profile->setStyleSheet("QToolButton{border-image:url(:/image/profile_5.png);}");
+    });
+    connect(profile,&Profile::change6,this,[=](){
+        ui->profile->setIcon(QIcon());
+        ui->profile->setStyleSheet("QToolButton{border-image:url(:/image/profile_6.png);}");
+    });
+    connect(profile,&Profile::change7,this,[=](){
+        ui->profile->setIcon(QIcon());
+        ui->profile->setStyleSheet("QToolButton{border-image:url(:/image/TOUXIANG.PNG);}");
+    });
+}
 
 
 

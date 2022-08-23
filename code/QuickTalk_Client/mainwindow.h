@@ -18,6 +18,7 @@ class MainWindow : public QWidget
 public:
     explicit MainWindow(QWidget *parent = nullptr,QString = "");
     ~MainWindow();
+    void paintEvent(QPaintEvent *p);
 
 private:
     void MainInit();
@@ -40,6 +41,7 @@ private slots:
     void group_list(QString);
 
    void newGroup(QString);
+   void on_profile_clicked();
 
     void on_pushButton_clicked();
 

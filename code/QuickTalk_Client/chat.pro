@@ -29,6 +29,7 @@ SOURCES += \
         login.cpp \
     mainwindow.cpp \
     enroll.cpp \
+    profile.cpp \
     tcpclientsocket.cpp \
     talkwindow.cpp \
     background.cpp \
@@ -39,6 +40,7 @@ HEADERS += \
         login.h \
     mainwindow.h \
     enroll.h \
+    profile.h \
     tcpclientsocket.h \
     talkwindow.h \
     background.h \
@@ -49,6 +51,7 @@ FORMS += \
         login.ui \
     mainwindow.ui \
     enroll.ui \
+    profile.ui \
     talkwindow.ui \
     background.ui
 

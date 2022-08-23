@@ -54,5 +54,12 @@
         <file>image/underline.png</file>
         <file>image/ywj.jpg</file>
         <file>image/chatgroup.png</file>
+        <file>image/clientTOUxiang.png</file>
+        <file>image/profile_1.png</file>
+        <file>image/profile_2.png</file>
+        <file>image/profile_3.png</file>
+        <file>image/profile_4.png</file>
+        <file>image/profile_5.png</file>
+        <file>image/profile_6.png</file>
     </qresource>
 </RCC>
