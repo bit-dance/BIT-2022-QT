@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/rec">
+        <file>about.jpeg</file>
+        <file>copy.jpeg</file>
+        <file>cut.jpeg</file>
+        <file>new.jpeg</file>
+        <file>open.jpeg</file>
+        <file>paste.jpeg</file>
+        <file>redo.jpeg</file>
+        <file>save as.jpeg</file>
+        <file>save.jpeg</file>
+        <file>undo.jpeg</file>
+    </qresource>
+</RCC>
